@@ -2,10 +2,21 @@
   <div class="mobile-desktop">
     <!-- 应用图标区域 -->
     <div class="app-content">
+      <!-- 加载中动画 -->
+      <div v-if="deviceStore.isLoading" class="loading-container">
+        <van-loading type="spinner" color="#1989fa" size="48px" />
+        <p class="loading-text">正在加载设备列表...</p>
+      </div>
+
+      <!-- 空状态提示 -->
+      <div v-else-if="deviceStore.deviceList.length === 0" class="empty-container">
+        <van-empty description="暂无可用设备" />
+      </div>
+
       <!-- 应用图标网格 -->
-      <div class="app-grid">
+      <div v-else class="app-grid">
         <div
-          v-for="(app, index) in apps"
+          v-for="(app, index) in deviceStore.deviceList"
           :key="index"
           class="app-icon-wrapper"
           :class="{ disabled: !app.canuse }"
@@ -24,43 +35,36 @@
 <script setup>
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { showToast } from 'vant'
-
+import { showToast, Loading as VanLoading, Empty as VanEmpty } from 'vant'
+import { onMounted } from 'vue'
+import { useDeviceStore } from '@/stores/device'
 const router = useRouter()
+const deviceStore = useDeviceStore()
 
-// 应用图标数据
-const apps = ref([
-  { name: '设备1', uid: 'a1b2c3d4', canuse: true },
-  { name: '设备2', uid: 'e5f6g7h8', canuse: true },
-  { name: '设备3', uid: 'i9j0k1l2', canuse: false },
-  { name: '设备4', uid: 'm3n4o5p6', canuse: false },
-  { name: '设备5', uid: 'q7r8s9t0', canuse: false },
-  { name: '设备6', uid: 'u1v2w3x4', canuse: false },
-  { name: '设备7', uid: 'y5z6a7b8', canuse: false },
-  { name: '设备8', uid: 'c9d0e1f2', canuse: false },
-  { name: '设备9', uid: 'g3h4i5j6', canuse: false },
-  { name: '设备10', uid: 'k7l8m9n0', canuse: false },
-  { name: '设备11', uid: 'o1p2q3r4', canuse: false },
-  { name: '设备12', uid: 's5t6u7v8', canuse: false },
-  { name: '设备13', uid: 'w9x0y1z2', canuse: false },
-  { name: '设备14', uid: 'a3b4c5d6', canuse: false },
-  { name: '设备15', uid: 'e7f8g9h0', canuse: false },
-  { name: '设备16', uid: 'i1j2k3l4', canuse: false },
-  { name: '设备17', uid: 'm5n6o7p8', canuse: false },
-  { name: '设备18', uid: 'q9r0s1t2', canuse: false },
-  { name: '设备19', uid: 'u3v4w5x6', canuse: false },
-  { name: '设备20', uid: 'y7z8a9b0', canuse: false },
-])
-
+onMounted(async () => {
+  try {
+    deviceStore.isLoading = true
+    await deviceStore.fetchDeviceList()
+  } catch (error) {
+    console.error('获取设备列表失败:', error)
+    showToast({
+      message: '获取设备列表失败',
+      position: 'top',
+      type: 'fail',
+    })
+  } finally {
+    deviceStore.isLoading = false
+  }
+})
 const handleAppClick = (app, index) => {
   if (app.canuse) {
     // 使用app的uid进行跳转
     router.push({
       name: 'Phone',
-      params: { uuid: app.uid },
+      params: { mobileId: app.mobileId },
       query: { deviceName: app.name },
     })
-    console.log(`跳转到: ${app.name}, uuid: ${app.uid}, 索引: ${index}`)
+    console.log(`跳转到: ${app.name}, mobileId: ${app.mobileId}, 索引: ${index}`)
   } else {
     showToast({
       message: `${app.name}不可用`,
@@ -83,6 +87,33 @@ const handleAppClick = (app, index) => {
   position: relative;
   overflow: hidden;
   color: #323233;
+}
+
+/* 加载中容器样式 */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.loading-text {
+  margin-top: 15px;
+  color: #969799;
+  font-size: 14px;
+}
+
+/* 空状态容器样式 */
+.empty-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 

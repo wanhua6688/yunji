@@ -1,14 +1,36 @@
 <template>
   <div class="device-detail">
-    <div class="header">
-      <div class="back" @click="goBack">
-        <van-icon name="arrow-left" />
-        返回
+    <!-- 悬浮球 -->
+    <div
+      class="floating-ball"
+      :style="{ left: ballPosition.x + 'px', top: ballPosition.y + 'px' }"
+      @mousedown="startDrag"
+      @touchstart="startDrag"
+    >
+      <!-- 主悬浮球 -->
+      <div class="main-ball" @click="toggleMenu">
+        <van-icon name="phone-o" size="26" />
       </div>
-      <div class="title">
-        {{ deviceName }}
+
+      <!-- 返回按钮 -->
+      <div
+        class="menu-ball blue-ball"
+        :class="{ 'show-ball': menuVisible }"
+        @click="goBack"
+        title="返回"
+      >
+        <van-icon name="arrow-left" size="20" />
       </div>
-      <div class="placeholder"></div>
+
+      <!-- 退出按钮 -->
+      <div
+        class="menu-ball red-ball"
+        :class="{ 'show-ball': menuVisible }"
+        @click="exitDevice"
+        title="退出"
+      >
+        <van-icon name="cross" size="20" />
+      </div>
     </div>
 
     <div class="content-container">
@@ -37,43 +59,128 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { showToast, Icon as VanIcon, Loading as VanLoading } from 'vant'
-
-// 接收路由参数
-const props = defineProps({
-  uuid: String,
-})
 
 const route = useRoute()
 const router = useRouter()
 
 // 获取查询参数
 const deviceName = ref(route.query.deviceName || '未知设备')
-const uuid = ref(props.uuid || route.params.uuid || '无UUID')
+const mobileId = ref(route.params.mobileId || '')
+
 const canuse = ref(true)
 const isLoading = ref(true)
-const deviceList = ref([
-  {
-    uid: 'e5f6g7h8',
-    url: `https://main-manager.hubstudio.vip/1.35/mobile-remote.html?currentToken=%7B%22resultInfo%22:%7B%22controlList%22:%5B%7B%22controlCode%22:%22CS-TCP-CONTROL-27%22,%22controlInfoList%22:%5B%7B%22controlIp%22:%2210.6.234.8%22,%22controlPort%22:10270,%22traceServer%22:%22%22%7D%5D%7D%5D,%22webControlList%22:%5B%7B%22webControlCode%22:%22CS-TCP-CONTROL-27%22,%22webControlInfoList%22:%5B%7B%22controlIp%22:%22paascsc.armvm.com%22,%22controlPort%22:10277,%22traceServer%22:%22%22,%22ctLine%22:%22paascsc-ct.armvm.com%22,%22cuLine%22:%22paascsc-cu.armvm.com%22,%22cmccLine%22:%22paascsc-cm.armvm.com%22%7D%5D%7D%5D,%22webRtcControlList%22:%5B%7B%22webRtcControlInfoList%22:%5B%7B%22controlIp%22:%2210.6.234.8%22,%22controlPort%22:10270,%22traceServer%22:%22%22%7D%5D,%22controlCode%22:%22CS-TCP-CONTROL-27%22,%22gateway%22:%7B%22gatewayIp%22:%22paascsc.armvm.com%22,%22ctLine%22:%22paascsc-ct.armvm.com%22,%22cuLine%22:%22paascsc-cu.armvm.com%22,%22cmccLine%22:%22paascsc-cm.armvm.com%22,%22gatewayPort%22:10063%7D%7D%5D,%22remoteList%22:%5B%5D,%22userId%22:5429710,%22sessionId%22:%227f582f2507da41249538806ca6898737%22,%22padList%22:%5B%7B%22controlCode%22:%22%22,%22padCode%22:%22VM010054014097%22,%22padStatus%22:%221%22,%22padType%22:%22ANDROID%22,%22videoCode%22:%22%22%7D%5D,%22tcpSslList%22:%5B%5D,%22wssList%22:%5B%5D,%22videoList%22:%5B%5D,%22merchantInfo%22:%7B%22appSecret%22:%22af17ea8d34df2a493c67a05d03b13578%22,%22appkey%22:%22bfd2b7583f9943f398bbc3845a052480%22%7D,%22domain%22:%22https://paas.armvm.com%22,%22controlTactics%22:%22auto%22,%22webRtcMode%22:%22%22,%22gateway%22:%7B%22gatewayIp%22:%22paascsc.armvm.com%22,%22gatewayPort%22:10063%7D%7D,%22padCode%22:%22VM010054014097%22%7D`,
-  },
-  {
-    uid: 'a1b2c3d4',
-    url: `https://main-manager.hubstudio.vip/1.35/mobile-remote.html?currentToken=%7B%22resultInfo%22:%7B%22controlList%22:%5B%7B%22controlCode%22:%22CS-TCP-CONTROL-28%22,%22controlInfoList%22:%5B%7B%22controlIp%22:%2210.6.234.8%22,%22controlPort%22:10280,%22traceServer%22:%22%22%7D%5D%7D%5D,%22webControlList%22:%5B%7B%22webControlCode%22:%22CS-TCP-CONTROL-28%22,%22webControlInfoList%22:%5B%7B%22controlIp%22:%22paascsc.armvm.com%22,%22controlPort%22:10287,%22traceServer%22:%22%22,%22ctLine%22:%22paascsc-ct.armvm.com%22,%22cuLine%22:%22paascsc-cu.armvm.com%22,%22cmccLine%22:%22paascsc-cm.armvm.com%22%7D%5D%7D%5D,%22webRtcControlList%22:%5B%7B%22webRtcControlInfoList%22:%5B%7B%22controlIp%22:%2210.6.234.8%22,%22controlPort%22:10280,%22traceServer%22:%22%22%7D%5D,%22controlCode%22:%22CS-TCP-CONTROL-28%22,%22gateway%22:%7B%22gatewayIp%22:%22paascsc.armvm.com%22,%22ctLine%22:%22paascsc-ct.armvm.com%22,%22cuLine%22:%22paascsc-cu.armvm.com%22,%22cmccLine%22:%22paascsc-cm.armvm.com%22,%22gatewayPort%22:10013%7D%7D%5D,%22remoteList%22:%5B%5D,%22userId%22:5429710,%22sessionId%22:%22bd0a1394a96e47919a67197cc9e28e3d%22,%22padList%22:%5B%7B%22controlCode%22:%22%22,%22padCode%22:%22VM010054014048%22,%22padStatus%22:%221%22,%22padType%22:%22ANDROID%22,%22videoCode%22:%22%22%7D%5D,%22tcpSslList%22:%5B%5D,%22wssList%22:%5B%5D,%22videoList%22:%5B%5D,%22merchantInfo%22:%7B%22appSecret%22:%22af17ea8d34df2a493c67a05d03b13578%22,%22appkey%22:%22bfd2b7583f9943f398bbc3845a052480%22%7D,%22domain%22:%22https://paas.armvm.com%22,%22controlTactics%22:%22auto%22,%22webRtcMode%22:%22%22,%22gateway%22:%7B%22gatewayIp%22:%22paascsc.armvm.com%22,%22gatewayPort%22:10013%7D%7D,%22padCode%22:%22VM010054014048%22%7D`,
-  },
-])
+import { useDeviceStore } from '@/stores/device'
+const deviceStore = useDeviceStore()
+// const deviceList = computed(() => deviceStore.devices)
+// 悬浮球位置
+const ballPosition = ref({
+  x: window.innerWidth - 70,
+  y: window.innerHeight - 100,
+})
+
+const currentDevice = ref(null)
+const menuVisible = ref(false)
+let isDragging = false
+let dragOffset = { x: 0, y: 0 }
+
+// 开始拖动
+const startDrag = (event) => {
+  // 如果菜单打开，点击就不触发拖动
+  if (menuVisible.value) {
+    menuVisible.value = false
+    return
+  }
+
+  isDragging = true
+  const clientX = event.touches ? event.touches[0].clientX : event.clientX
+  const clientY = event.touches ? event.touches[0].clientY : event.clientY
+
+  dragOffset = {
+    x: clientX - ballPosition.value.x,
+    y: clientY - ballPosition.value.y,
+  }
+
+  // 添加移动和停止事件监听
+  if (event.type === 'mousedown') {
+    document.addEventListener('mousemove', onDrag)
+    document.addEventListener('mouseup', stopDrag)
+  } else {
+    document.addEventListener('touchmove', onDrag, { passive: false })
+    document.addEventListener('touchend', stopDrag)
+  }
+}
+
+// 拖动中
+const onDrag = (event) => {
+  if (!isDragging) return
+
+  // 阻止默认行为，防止触摸设备上的滚动
+  if (event.cancelable) event.preventDefault()
+
+  const clientX = event.touches ? event.touches[0].clientX : event.clientX
+  const clientY = event.touches ? event.touches[0].clientY : event.clientY
+
+  // 计算新位置，并确保不会超出屏幕边界
+  const newX = Math.max(0, Math.min(window.innerWidth - 60, clientX - dragOffset.x))
+  const newY = Math.max(0, Math.min(window.innerHeight - 60, clientY - dragOffset.y))
+
+  ballPosition.value = { x: newX, y: newY }
+
+  // 如果拖动过程中菜单是开着的，关闭它
+  if (menuVisible.value) {
+    menuVisible.value = false
+  }
+}
+
+// 停止拖动
+const stopDrag = () => {
+  isDragging = false
+  document.removeEventListener('mousemove', onDrag)
+  document.removeEventListener('mouseup', stopDrag)
+  document.removeEventListener('touchmove', onDrag)
+  document.removeEventListener('touchend', stopDrag)
+}
+
+// 切换菜单显示 - 简化为点击展开，再次点击收起
+const toggleMenu = (event) => {
+  // 防止事件传播
+  if (event) event.stopPropagation()
+
+  // 切换菜单状态
+  menuVisible.value = !menuVisible.value
+
+  // 打印状态，帮助调试
+  console.log('菜单状态切换为：', menuVisible.value ? '显示' : '隐藏')
+}
 
 // 返回函数
-const goBack = () => {
+const goBack = (event) => {
+  // 防止事件传播
+  if (event) event.stopPropagation()
+
+  // 关闭菜单
+  menuVisible.value = false
   router.push({ name: 'Home' })
 }
 
-// 根据UUID查找设备信息
-const currentDevice = computed(() => {
-  return deviceList.value.find((device) => device.uid === uuid.value) || null
-})
+// 退出当前云机
+const exitDevice = (event) => {
+  // 防止事件传播
+  if (event) event.stopPropagation()
+
+  // 关闭菜单
+  menuVisible.value = false
+  showToast({
+    message: '已退出云手机',
+    position: 'bottom',
+  })
+  router.push({ name: 'Home' })
+}
+
+// 根据mobileId查找设备信息 - 使用store数据
 
 // 处理iframe加载问题
 const handleIframeLoaded = () => {
@@ -98,28 +205,60 @@ const handleResize = () => {
   }
 }
 
-onMounted(() => {
-  if (currentDevice.value) {
-    // showToast({
-    //   message: `已加载设备: ${deviceName.value}`,
-    //   position: 'top',
-    // })
-
-    // 为了确保跨域引用安全，将URL打开到一个新窗口的选项
-    console.log('加载云手机URL:', currentDevice.value.url)
-  } else {
+onMounted(async () => {
+  console.log('设备ID:', mobileId.value)
+  if (!mobileId.value) {
     showToast({
-      message: `找不到设备: ${uuid.value}`,
+      message: '设备ID不能为空',
+      position: 'top',
+      type: 'fail',
+    })
+    setTimeout(() => {
+      router.push({ name: 'Home' })
+    }, 500)
+    return
+  }
+
+  try {
+    console.log('设备ID:', mobileId.value)
+    console.log('设备列表数据:', deviceStore.deviceList)
+
+    // 从 store 中获取设备信息
+    const device = deviceStore.findDeviceByMobileId(mobileId.value)
+    currentDevice.value = device
+    console.log('设备查找结果:', device)
+    if (!device) {
+      showToast({
+        message: `找不到设备: ${mobileId.value}`,
+        position: 'top',
+        type: 'fail',
+      })
+      setTimeout(() => {
+        router.push({ name: 'Home' })
+      }, 1500)
+      return
+    }
+    // // 保存设备信息供显示使用
+    // currentDeviceInfo.value = device
+    // console.log('加载云手机URL:', url)
+  } catch (error) {
+    console.error('获取设备信息失败:', error)
+    showToast({
+      message: '获取设备信息失败',
       position: 'top',
       type: 'fail',
     })
   }
 
-  console.log('设备参数:', {
-    uuid: uuid.value,
-    deviceName: deviceName.value,
-    deviceFound: !!currentDevice.value,
-  })
+  // 打印最终的设备参数
+  setTimeout(() => {
+    console.log('最终设备参数:', {
+      mobileId: mobileId.value,
+      deviceName: deviceName.value,
+      deviceFound: !!currentDevice.value,
+      device: currentDevice.value,
+    })
+  }, 500)
 
   // 添加事件监听器，确保窗口尺寸变化时iframe会重新调整
   window.addEventListener('resize', handleResize)
@@ -129,7 +268,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  // 移除事件监听器
+  // 移除所有事件监听器
   window.removeEventListener('resize', handleResize)
 })
 </script>
@@ -157,49 +296,122 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-.header {
+/* 悬浮球样式 */
+.floating-ball {
+  position: fixed;
+  z-index: 1000;
   display: flex;
+  justify-content: center;
   align-items: center;
-  justify-content: space-between;
-  padding: 8px 16px;
-  background-color: white;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-  z-index: 100;
-  position: relative;
-  height: 36px;
-  flex-shrink: 0;
-  width: 100%;
-  box-sizing: border-box;
 }
 
-.back {
+.main-ball {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #1989fa; /* Vant 主题蓝色 */
   display: flex;
   align-items: center;
-  color: #2c3e50;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   cursor: pointer;
-  font-size: 14px;
-  flex: 0 0 auto;
-}
-
-.title {
-  font-size: 16px;
-  font-weight: 500;
-  color: #323233;
-  text-align: center;
-  flex: 1;
-  white-space: nowrap;
+  user-select: none;
+  touch-action: none;
+  font-size: 20px;
+  transition:
+    transform 0.2s,
+    background-color 0.2s;
+  z-index: 10;
+  position: relative;
   overflow: hidden;
-  text-overflow: ellipsis;
-  margin: 0 10px;
 }
 
-.placeholder {
+/* 图标样式 */
+.main-ball .van-icon {
+  color: white;
+  font-weight: bold;
+}
+
+.main-ball:active {
+  transform: scale(0.95);
+  background-color: rgba(25, 137, 250, 0.9);
+}
+
+/* 菜单圆球共同样式 */
+.menu-ball {
+  position: absolute;
   width: 40px;
-  flex: 0 0 auto;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  user-select: none;
+  opacity: 0;
+  visibility: hidden;
+  z-index: 5;
+  transition: all 0.3s ease;
 }
 
-.back .van-icon {
-  margin-right: 4px;
+/* 蓝色返回按钮 */
+.blue-ball {
+  background-color: #1989fa;
+  transform: translate(-50px, -5px);
+}
+
+/* 红色退出按钮 */
+.red-ball {
+  background-color: #ee0a24;
+  transform: translate(0, -55px);
+}
+
+/* 显示菜单圆球 */
+.show-ball {
+  opacity: 1;
+  visibility: visible;
+  animation: popIn 0.3s ease forwards;
+}
+
+/* 弹出动画 */
+@keyframes popIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translate(0, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) translate(-50px, -5px);
+  }
+  100% {
+    transform: scale(1) translate(-50px, -5px);
+  }
+}
+
+/* 红色的弹出动画单独定义 */
+.show-ball.red-ball {
+  animation: popInRed 0.3s ease forwards;
+}
+
+@keyframes popInRed {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translate(0, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) translate(0, -55px);
+  }
+  100% {
+    transform: scale(1) translate(0, -55px);
+  }
+}
+
+.menu-item span {
+  font-size: 14px;
 }
 
 .content-container {
@@ -208,7 +420,7 @@ onUnmounted(() => {
   position: relative;
   overflow: hidden;
   width: 100%;
-  height: calc(100vh - 36px);
+  height: 100vh;
 }
 
 .device {
