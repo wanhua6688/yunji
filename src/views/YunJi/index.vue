@@ -47,7 +47,7 @@
       <div class="device" v-if="currentDevice">
         <div class="loading-container" v-if="isLoading">
           <van-loading type="spinner" color="#1989fa" size="48px" />
-          <p class="loading-text">正在加载云手机...</p>
+          <p class="loading-text">正在加载设备...</p>
         </div>
         <iframe
           :src="currentDevice.url"
@@ -163,7 +163,7 @@ const toggleMenu = (event) => {
   menuVisible.value = !menuVisible.value
 
   // 打印状态，帮助调试
-  console.log('菜单状态切换为：', menuVisible.value ? '显示' : '隐藏')
+  // console.log('菜单状态切换为：', menuVisible.value ? '显示' : '隐藏')
 }
 
 // 返回函数
@@ -193,28 +193,28 @@ const toggleFullscreen = (event) => {
   if (!isFullscreen.value) {
     // 进入全屏模式
     contentContainer.classList.add('vertical-fullscreen')
-    
+
     // 使用全屏API
     if (deviceIframe) {
       // 优先对iframe元素进行全屏，获得更好的移动端体验
       if (deviceIframe.requestFullscreen) {
-        deviceIframe.requestFullscreen().catch(err => {
+        deviceIframe.requestFullscreen().catch((err) => {
           console.warn('无法对iframe元素进行全屏:', err)
           // 回退到对整个文档进行全屏
           fallbackToDocumentFullscreen()
         })
       } else if (deviceIframe.webkitRequestFullscreen) {
-        deviceIframe.webkitRequestFullscreen().catch(err => {
+        deviceIframe.webkitRequestFullscreen().catch((err) => {
           console.warn('无法对iframe元素进行全屏:', err)
           fallbackToDocumentFullscreen()
         })
       } else if (deviceIframe.mozRequestFullScreen) {
-        deviceIframe.mozRequestFullScreen().catch(err => {
+        deviceIframe.mozRequestFullScreen().catch((err) => {
           console.warn('无法对iframe元素进行全屏:', err)
           fallbackToDocumentFullscreen()
         })
       } else if (deviceIframe.msRequestFullscreen) {
-        deviceIframe.msRequestFullscreen().catch(err => {
+        deviceIframe.msRequestFullscreen().catch((err) => {
           console.warn('无法对iframe元素进行全屏:', err)
           fallbackToDocumentFullscreen()
         })
@@ -225,17 +225,17 @@ const toggleFullscreen = (event) => {
     } else {
       fallbackToDocumentFullscreen()
     }
-    
+
     // 隐藏地址栏（移动端）
     setTimeout(() => {
       window.scrollTo(0, 1)
     }, 100)
-    
+
     isFullscreen.value = true
   } else {
     // 退出全屏模式
     contentContainer.classList.remove('vertical-fullscreen')
-    
+
     // 退出全屏API
     if (document.exitFullscreen) {
       document.exitFullscreen()
@@ -246,7 +246,7 @@ const toggleFullscreen = (event) => {
     } else if (document.msExitFullscreen) {
       document.msExitFullscreen()
     }
-    
+
     isFullscreen.value = false
   }
 }
@@ -305,7 +305,7 @@ const exitDevice = (event) => {
   // 关闭菜单
   menuVisible.value = false
   showToast({
-    message: '已退出云手机',
+    message: '已退出设备',
     position: 'bottom',
   })
   router.push({ name: 'Home' })
@@ -315,7 +315,7 @@ const exitDevice = (event) => {
 
 // 处理iframe加载问题
 const handleIframeLoaded = () => {
-  console.log('云手机已加载')
+  console.log('设备已加载')
   // 设置短暂停确保内容完全加载
   setTimeout(() => {
     isLoading.value = false
@@ -371,7 +371,7 @@ onMounted(async () => {
     }
     // // 保存设备信息供显示使用
     // currentDeviceInfo.value = device
-    // console.log('加载云手机URL:', url)
+    // console.log('加载设备URL:', url)
   } catch (error) {
     console.error('获取设备信息失败:', error)
     showToast({

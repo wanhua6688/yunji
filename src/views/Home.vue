@@ -64,7 +64,7 @@ const handleAppClick = (app, index) => {
       params: { mobileId: app.mobileId },
       query: { deviceName: app.name },
     })
-    console.log(`跳转到: ${app.name}, mobileId: ${app.mobileId}, 索引: ${index}`)
+    // console.log(`跳转到: ${app.name}, mobileId: ${app.mobileId}, 索引: ${index}`)
   } else {
     showToast({
       message: `${app.name}不可用`,
