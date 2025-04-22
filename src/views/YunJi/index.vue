@@ -1,5 +1,5 @@
 <template>
-  <div class="device-detail">
+  <div class="device-detail" :class="{ 'fullscreen-mode': isFullscreen }">
     <!-- 悬浮球 -->
     <div
       class="floating-ball"
@@ -9,7 +9,7 @@
     >
       <!-- 主悬浮球 -->
       <div class="main-ball" @click="toggleMenu">
-        <van-icon name="phone-o" size="26" />
+        <van-icon name="chat-o" size="26" />
       </div>
 
       <!-- 返回按钮 -->
@@ -20,6 +20,16 @@
         title="返回"
       >
         <van-icon name="arrow-left" size="20" />
+      </div>
+
+      <!-- 全屏按钮 -->
+      <div
+        class="menu-ball green-ball"
+        :class="{ 'show-ball': menuVisible }"
+        @click="toggleFullscreen"
+        title="全屏"
+      >
+        <van-icon :name="isFullscreen ? 'shrink' : 'expand'" size="20" />
       </div>
 
       <!-- 退出按钮 -->
@@ -165,6 +175,127 @@ const goBack = (event) => {
   menuVisible.value = false
   router.push({ name: 'Home' })
 }
+
+// 全屏状态
+const isFullscreen = ref(false)
+
+// 切换全屏
+const toggleFullscreen = (event) => {
+  // 防止事件传播
+  if (event) event.stopPropagation()
+
+  // 关闭菜单
+  menuVisible.value = false
+
+  const contentContainer = document.querySelector('.content-container')
+  const deviceIframe = document.querySelector('iframe')
+
+  if (!isFullscreen.value) {
+    // 进入全屏模式
+    contentContainer.classList.add('vertical-fullscreen')
+    
+    // 使用全屏API
+    if (deviceIframe) {
+      // 优先对iframe元素进行全屏，获得更好的移动端体验
+      if (deviceIframe.requestFullscreen) {
+        deviceIframe.requestFullscreen().catch(err => {
+          console.warn('无法对iframe元素进行全屏:', err)
+          // 回退到对整个文档进行全屏
+          fallbackToDocumentFullscreen()
+        })
+      } else if (deviceIframe.webkitRequestFullscreen) {
+        deviceIframe.webkitRequestFullscreen().catch(err => {
+          console.warn('无法对iframe元素进行全屏:', err)
+          fallbackToDocumentFullscreen()
+        })
+      } else if (deviceIframe.mozRequestFullScreen) {
+        deviceIframe.mozRequestFullScreen().catch(err => {
+          console.warn('无法对iframe元素进行全屏:', err)
+          fallbackToDocumentFullscreen()
+        })
+      } else if (deviceIframe.msRequestFullscreen) {
+        deviceIframe.msRequestFullscreen().catch(err => {
+          console.warn('无法对iframe元素进行全屏:', err)
+          fallbackToDocumentFullscreen()
+        })
+      } else {
+        // 如果iframe不支持全屏API，则回退到整个文档
+        fallbackToDocumentFullscreen()
+      }
+    } else {
+      fallbackToDocumentFullscreen()
+    }
+    
+    // 隐藏地址栏（移动端）
+    setTimeout(() => {
+      window.scrollTo(0, 1)
+    }, 100)
+    
+    isFullscreen.value = true
+  } else {
+    // 退出全屏模式
+    contentContainer.classList.remove('vertical-fullscreen')
+    
+    // 退出全屏API
+    if (document.exitFullscreen) {
+      document.exitFullscreen()
+    } else if (document.webkitExitFullscreen) {
+      document.webkitExitFullscreen()
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen()
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen()
+    }
+    
+    isFullscreen.value = false
+  }
+}
+
+// 对整个文档进行全屏的回退方法
+const fallbackToDocumentFullscreen = () => {
+  const elem = document.documentElement
+  if (elem.requestFullscreen) {
+    elem.requestFullscreen()
+  } else if (elem.webkitRequestFullscreen) {
+    elem.webkitRequestFullscreen()
+  } else if (elem.mozRequestFullScreen) {
+    elem.mozRequestFullScreen()
+  } else if (elem.msRequestFullscreen) {
+    elem.msRequestFullscreen()
+  }
+}
+
+// 处理全屏状态变化
+const handleFullscreenChange = () => {
+  // 检测浏览器全屏状态
+  const fullscreenActive =
+    !!document.fullscreenElement ||
+    !!document.webkitFullscreenElement ||
+    !!document.mozFullScreenElement ||
+    !!document.msFullscreenElement
+
+  // 如果浏览器退出全屏但我们的状态仍为全屏，则同步状态
+  if (!fullscreenActive && isFullscreen.value) {
+    const contentContainer = document.querySelector('.content-container')
+    contentContainer.classList.remove('vertical-fullscreen')
+    isFullscreen.value = false
+  }
+}
+
+// 监听全屏状态变化
+onMounted(() => {
+  document.addEventListener('fullscreenchange', handleFullscreenChange)
+  document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+  document.addEventListener('mozfullscreenchange', handleFullscreenChange)
+  document.addEventListener('MSFullscreenChange', handleFullscreenChange)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('fullscreenchange', handleFullscreenChange)
+  document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+  document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+  document.removeEventListener('MSFullscreenChange', handleFullscreenChange)
+})
 
 // 退出当前云机
 const exitDevice = (event) => {
@@ -363,6 +494,12 @@ onUnmounted(() => {
   transform: translate(-50px, -5px);
 }
 
+/* 绿色全屏按钮 */
+.green-ball {
+  background-color: #07c160;
+  transform: translate(-35px, -45px);
+}
+
 /* 红色退出按钮 */
 .red-ball {
   background-color: #ee0a24;
@@ -388,6 +525,25 @@ onUnmounted(() => {
   }
   100% {
     transform: scale(1) translate(-50px, -5px);
+  }
+}
+
+/* 绿色按钮的弹出动画单独定义 */
+.show-ball.green-ball {
+  animation: popInGreen 0.3s ease forwards;
+}
+
+@keyframes popInGreen {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translate(0, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) translate(-35px, -45px);
+  }
+  100% {
+    transform: scale(1) translate(-35px, -45px);
   }
 }
 
@@ -485,5 +641,68 @@ iframe {
   margin: 8px 0;
   font-size: 15px;
   color: #646566;
+}
+
+/* 全屏模式样式 */
+.fullscreen-mode {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 添加竖向全屏样式 */
+.vertical-fullscreen {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #000;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+  padding: 0;
+  margin: 0;
+}
+
+.vertical-fullscreen .device {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+}
+
+.vertical-fullscreen iframe {
+  width: auto;
+  height: 100%;
+  max-height: 100vh;
+  aspect-ratio: 9/16; /* 移动设备竖向标准比例 */
+  border: none;
+  margin: 0 auto;
+  padding: 0;
+  overflow: hidden;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+/* 全屏模式下调整悬浮球位置和样式 */
+.fullscreen-mode .floating-ball {
+  z-index: 10000; /* 确保悬浮球在全屏内容之上 */
+}
+
+/* 在全屏模式下减少悬浮球透明度，除非悬浮 */
+.fullscreen-mode .main-ball {
+  opacity: 0.6;
+  transition: opacity 0.3s ease;
+}
+
+.fullscreen-mode .main-ball:hover {
+  opacity: 1;
 }
 </style>
