@@ -9,17 +9,7 @@
     >
       <!-- 主悬浮球 -->
       <div class="main-ball" @click="toggleMenu">
-        <van-icon name="chat-o" size="26" />
-      </div>
-
-      <!-- 返回按钮 -->
-      <div
-        class="menu-ball blue-ball"
-        :class="{ 'show-ball': menuVisible }"
-        @click="goBack"
-        title="返回"
-      >
-        <van-icon name="arrow-left" size="20" />
+        <van-icon name="setting-o" size="26" />
       </div>
 
       <!-- 全屏按钮 -->
@@ -32,24 +22,14 @@
         <van-icon :name="isFullscreen ? 'shrink' : 'expand'" size="20" />
       </div>
 
-      <!-- 分享按钮 -->
-      <div
-        class="menu-ball purple-ball"
-        :class="{ 'show-ball': menuVisible }"
-        @click="copyShareLink"
-        title="复制分享链接"
-      >
-        <van-icon name="share-o" size="20" />
-      </div>
-
-      <!-- 退出按钮 -->
+      <!-- 关闭按钮 -->
       <div
         class="menu-ball red-ball"
         :class="{ 'show-ball': menuVisible }"
         @click="exitDevice"
-        title="退出"
+        title="关闭"
       >
-        <van-icon name="cross" size="20" />
+        <van-icon name="stop-circle-o" size="20" />
       </div>
     </div>
 
@@ -79,18 +59,14 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import { showToast } from 'vant'
-import { useClipboard } from '@vueuse/core'
-import { shutdownMobile } from '@/api'
-
-import { Icon as VanIcon, Loading as VanLoading } from 'vant'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { showToast, Icon as VanIcon, Loading as VanLoading } from 'vant'
 
 const route = useRoute()
 const router = useRouter()
 const mobileId = ref(route.params.mobileId || '')
-const { copy, copied, isSupported } = useClipboard({ legacy: true })
+
 const isLoading = ref(true)
 import { useDeviceStore } from '@/stores/device'
 const deviceStore = useDeviceStore()
@@ -99,7 +75,7 @@ const ballPosition = ref({
   x: window.innerWidth - 70,
   y: window.innerHeight - 100,
 })
-const shareLink = ref(`${window.location.origin}/s/${mobileId.value}`)
+
 const currentDevice = ref(null)
 const menuVisible = ref(false)
 let isDragging = false
@@ -173,36 +149,6 @@ const toggleMenu = (event) => {
 
   // 打印状态，帮助调试
   // console.log('菜单状态切换为：', menuVisible.value ? '显示' : '隐藏')
-}
-
-// 初始化剪贴板工具
-// const { copy, copied, error } = useClipboard()
-
-// 复制分享链接
-const copyShareLink = async (event) => {
-  // 防止事件传播
-  if (event) event.stopPropagation()
-
-  // 关闭菜单
-  menuVisible.value = false
-
-  console.log('分享链接:', shareLink.value)
-  // 执行复制
-  await copy(shareLink.value)
-
-  if (copied.value) {
-    showToast({
-      message: '分享链接已复制',
-      position: 'bottom',
-      type: 'success',
-    })
-  } else {
-    showToast({
-      message: '复制失败，请手动复制',
-      position: 'bottom',
-      type: 'fail',
-    })
-  }
 }
 
 // 返回函数
@@ -343,12 +289,11 @@ const exitDevice = (event) => {
 
   // 关闭菜单
   menuVisible.value = false
-  // showToast({
-  //   message: '已退出设备',
-  //   position: 'bottom',
-  // })
+  showToast({
+    message: '已退出设备',
+    position: 'bottom',
+  })
   router.push({ name: 'Home' })
-  // shutdownMobile(mobileId.value)
 }
 
 // 根据mobileId查找设备信息 - 使用store数据
@@ -458,7 +403,7 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-/* 悬浮球容器 */
+/* 悬浮球样式 */
 .floating-ball {
   position: fixed;
   z-index: 1000;
@@ -470,8 +415,8 @@ onUnmounted(() => {
 
 /* 主悬浮球 */
 .main-ball {
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: linear-gradient(135deg, #42a5f5, #1565c0);
   display: flex;
@@ -506,8 +451,8 @@ onUnmounted(() => {
 /* 菜单球 */
 .menu-ball {
   position: absolute;
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: flex;
   justify-content: center;
@@ -526,29 +471,17 @@ onUnmounted(() => {
   transform: scale(1.15) !important;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
-
-/* 蓝色返回按钮 */
-.blue-ball {
-  background: linear-gradient(135deg, #29b6f6, #0277bd);
-  transform: translate(-70px, -20px);
-}
-
+ 
 /* 绿色全屏按钮 */
 .green-ball {
   background: linear-gradient(135deg, #66bb6a, #2e7d32);
-  transform: translate(-60px, -70px);
+  transform: translate(-30px, -20px);
 }
 
-/* 紫色分享按钮 */
-.purple-ball {
-  background: linear-gradient(135deg, #ab47bc, #6a1b9a);
-  transform: translate(-20px, -90px);
-}
-
-/* 红色退出按钮 */
+/* 红色关闭按钮 */
 .red-ball {
-  background: linear-gradient(135deg, #ef5350, #c62828);
-  transform: translate(30px, -70px);
+  background: linear-gradient(15deg, #ef5350, #c62828);
+  transform: translate(40px, -20px);
 }
 
 /* 显示菜单圆球 */
@@ -557,30 +490,10 @@ onUnmounted(() => {
   visibility: visible;
 }
 
-/* 蓝色按钮的弹出动画 */
-.show-ball.blue-ball {
-  animation: popInBlue 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  animation-delay: 0.05s;
-}
-
-@keyframes popInBlue {
-  0% {
-    opacity: 0;
-    transform: scale(0.5) translate(0, 0);
-  }
-  70% {
-    opacity: 1;
-    transform: scale(1.1) translate(-70px, -20px);
-  }
-  100% {
-    transform: scale(1) translate(-70px, -20px);
-  }
-}
-
 /* 绿色按钮的弹出动画 */
 .show-ball.green-ball {
   animation: popInGreen 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  animation-delay: 0.1s;
+  animation-delay: 0.05s;
 }
 
 @keyframes popInGreen {
@@ -590,37 +503,17 @@ onUnmounted(() => {
   }
   70% {
     opacity: 1;
-    transform: scale(1.1) translate(-60px, -70px);
+    transform: scale(1.1) translate(-20px, -20px);
   }
   100% {
-    transform: scale(1) translate(-60px, -70px);
-  }
-}
-
-/* 紫色按钮的弹出动画 */
-.show-ball.purple-ball {
-  animation: popInPurple 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  animation-delay: 0.15s;
-}
-
-@keyframes popInPurple {
-  0% {
-    opacity: 0;
-    transform: scale(0.5) translate(0, 0);
-  }
-  70% {
-    opacity: 1;
-    transform: scale(1.1) translate(-20px, -90px);
-  }
-  100% {
-    transform: scale(1) translate(-20px, -90px);
+    transform: scale(1) translate(-30px, -30px);
   }
 }
 
 /* 红色的弹出动画 */
 .show-ball.red-ball {
   animation: popInRed 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-  animation-delay: 0.2s;
+  animation-delay: 0.1s;
 }
 
 @keyframes popInRed {
@@ -630,10 +523,10 @@ onUnmounted(() => {
   }
   70% {
     opacity: 1;
-    transform: scale(1.1) translate(30px, -70px);
+    transform: scale(1.1) translate(20px, -20px);
   }
   100% {
-    transform: scale(1) translate(30px, -70px);
+    transform: scale(1) translate(30px, -30px);
   }
 }
 

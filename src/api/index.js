@@ -12,6 +12,16 @@ ins.interceptors.response.use((res) => {
   return res.data
 })
 
-export function getMobileLIst() {
-  return ins.post('/cloud-mobile/mobile-page')
+export function getMobileLIst(data = {}) {
+  return ins.post('/cloud-mobile/mobile-page', {
+    state: true,
+    ...data,
+  })
+}
+
+export function shutdownMobile(id) {
+  return ins.post('/cloud-mobile/shutdown-mobile', {
+    check: true,
+    mobileIds: [id],
+  })
 }

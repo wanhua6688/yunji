@@ -7,9 +7,8 @@ export const useDeviceStore = defineStore(
     const deviceList = ref([])
     const currentDevice = ref(null)
     const isLoading = ref(true)
-    function fetchDeviceList() {
-      return getMobileLIst().then((res) => {
-        console.log(res.data)
+    function fetchDeviceList(data = {}) {
+      return getMobileLIst(data).then((res) => {
         const newApps = res.data.list.map((item) => {
           return {
             name: item.name,

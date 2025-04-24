@@ -9,10 +9,15 @@ const router = createRouter({
       component: () => import('@/views/Home.vue'),
     },
     {
-      path: '/phone/:mobileId?',
+      path: '/phone/:mobileId',
       name: 'Phone',
       component: () => import('@/views/YunJi/index.vue'),
       props: true,
+    },
+    {
+      path: '/s/:mobileId',
+      name: 'SharePhone',
+      component: () => import('@/views/SharePhone/index.vue'),
     },
   ],
 })
